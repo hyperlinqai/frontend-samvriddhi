@@ -1,0 +1,473 @@
+<!-- Toast Notification -->
+<div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1080;">
+    <% if (success) { %>
+        <div class="toast align-items-center text-bg-success border-0 show" role="alert">
+            <div class="d-flex">
+                <div class="toast-body"><i class="bi bi-check-circle me-2"></i>
+                    <%= success %>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+        <% } %>
+            <% if (error) { %>
+                <div class="toast align-items-center text-bg-danger border-0 show" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body"><i class="bi bi-exclamation-triangle me-2"></i>
+                            <%= error %>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                            data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+                <% } %>
+</div>
+
+<!-- Settings Sub-Navigation -->
+<div class="settings-subnav">
+    <a href="/settings" class="settings-subnav-item active">
+        <i class="bi bi-people"></i> Users
+    </a>
+    <a href="/settings/entities" class="settings-subnav-item">
+        <i class="bi bi-building"></i> Entities
+    </a>
+    <a href="/settings/roles" class="settings-subnav-item">
+        <i class="bi bi-shield-lock"></i> Roles & Permissions
+    </a>
+</div>
+
+<!-- Page Header -->
+<div class="settings-page-header">
+    <div>
+        <h2 class="settings-title">User Management</h2>
+        <p class="settings-subtitle">Create, manage, and control access for all system users</p>
+    </div>
+    <button class="btn-add-user" data-bs-toggle="modal" data-bs-target="#createUserModal" id="addUserBtn">
+        <i class="bi bi-plus-lg"></i>
+        <span>Add User</span>
+    </button>
+</div>
+
+<!-- Filters Bar -->
+<div class="settings-filters">
+    <form method="GET" action="/settings" class="settings-filter-form" id="filterForm">
+        <div class="filter-search">
+            <i class="bi bi-search"></i>
+            <input type="text" name="search" placeholder="Search by name, email, or phone..."
+                value="<%= filters.search %>" id="searchInput">
+        </div>
+        <div class="filter-role">
+            <select name="role" id="roleFilter" onchange="document.getElementById('filterForm').submit()">
+                <option value="">All Roles</option>
+                <% roles.forEach(r=> { %>
+                    <option value="<%= r.name %>" <%=filters.role===r.name ? 'selected' : '' %>>
+                        <%= r.name %>
+                    </option>
+                    <% }) %>
+            </select>
+        </div>
+        <button type="submit" class="filter-btn">
+            <i class="bi bi-funnel"></i> Filter
+        </button>
+        <% if (filters.search || filters.role) { %>
+            <a href="/settings" class="filter-clear-btn">
+                <i class="bi bi-x-lg"></i> Clear
+            </a>
+            <% } %>
+    </form>
+</div>
+
+<!-- Users Table -->
+<div class="settings-card">
+    <div class="settings-card-header">
+        <span class="settings-card-title">
+            <i class="bi bi-people me-2"></i>All Users
+        </span>
+        <span class="settings-card-badge">
+            <%= meta.total %> total
+        </span>
+    </div>
+    <div class="table-responsive">
+        <table class="settings-table" id="usersTable">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Entity</th>
+                    <th>Role</th>
+                    <th>Manager</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (users.length===0) { %>
+                    <tr>
+                        <td colspan="6" class="text-center py-5">
+                            <div class="empty-state">
+                                <i class="bi bi-people" style="font-size: 2.5rem; color: var(--text-muted);"></i>
+                                <p class="mt-2 mb-0" style="color: var(--text-muted);">No users found</p>
+                                <small style="color: var(--text-muted);">Try adjusting your filters or add a new
+                                    user</small>
+                            </div>
+                        </td>
+                    </tr>
+                    <% } else { %>
+                        <% users.forEach(u=> { %>
+                            <tr>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-avatar-sm">
+                                            <%= u.fullName ? u.fullName.charAt(0).toUpperCase() : 'U' %>
+                                        </div>
+                                        <div>
+                                            <div class="user-name">
+                                                <%= u.fullName || 'N/A' %>
+                                            </div>
+                                            <div class="user-id">
+                                                <small class="text-muted">
+                                                    <%= u.email || 'N/A' %>
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <% if (u.entity) { %>
+                                        <span class="role-badge"
+                                            style="background: var(--info-soft); color: var(--info);">
+                                            <%= u.entity.name %>
+                                        </span>
+                                        <% } else { %>
+                                            <span class="text-muted small">Global</span>
+                                            <% } %>
+                                </td>
+                                <td>
+                                    <% if (u.roleRecord && u.roleRecord.name) { %>
+                                        <span class="role-badge"
+                                            style="background: var(--primary-soft); color: var(--primary);">
+                                            <%= u.roleRecord.name %>
+                                        </span>
+                                        <% } else { %>
+                                            <span class="text-muted small">N/A</span>
+                                            <% } %>
+                                </td>
+                                <td>
+                                    <% if (u.reportingToUser) { %>
+                                        <span class="user-email">
+                                            <%= u.reportingToUser.fullName %>
+                                        </span>
+                                        <% } else { %>
+                                            <span class="text-muted small">None</span>
+                                            <% } %>
+                                </td>
+                                <td>
+                                    <span
+                                        class="status-badge status-<%= u.isActive !== false ? 'active' : 'inactive' %>">
+                                        <span class="status-dot"></span>
+                                        <%= u.isActive !==false ? 'Active' : 'Inactive' %>
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="action-btns">
+                                        <button class="action-btn action-edit" title="Edit User"
+                                            onclick="openEditModal('<%= u.id %>', '<%= (u.fullName || '').replace(/'/g, '\\\'') %>', '<%= u.email || '' %>', '<%= u.phone || '' %>', '<%= u.roleId || '' %>', '<%= u.entityId || '' %>', '<%= u.reportingTo || '' %>', <%= u.isActive !== false %>)">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="action-btn action-delete" title="Delete User"
+                                            onclick="openDeleteModal('<%= u.id %>', '<%= (u.fullName || '').replace(/'/g, '\\\'') %>')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <% }) %>
+                                <% } %>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <% if (meta.totalPages> 1) { %>
+        <div class="settings-pagination">
+            <span class="pagination-info">
+                Page <%= meta.page %> of <%= meta.totalPages %> · Showing <%= users.length %> of <%= meta.total %>
+            </span>
+            <div class="pagination-btns">
+                <% if (meta.page> 1) { %>
+                    <a href="/settings?page=<%= meta.page - 1 %>&search=<%= filters.search %>&role=<%= filters.role %>"
+                        class="pagination-btn">
+                        <i class="bi bi-chevron-left"></i> Prev
+                    </a>
+                    <% } %>
+                        <% if (meta.page < meta.totalPages) { %>
+                            <a href="/settings?page=<%= meta.page + 1 %>&search=<%= filters.search %>&role=<%= filters.role %>"
+                                class="pagination-btn">
+                                Next <i class="bi bi-chevron-right"></i>
+                            </a>
+                            <% } %>
+            </div>
+        </div>
+        <% } %>
+</div>
+
+<!-- Create User Modal -->
+<div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content settings-modal">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <div class="modal-icon"><i class="bi bi-person-plus"></i></div>
+                    <div>
+                        <h5 class="modal-title" id="createUserModalLabel">Add New User</h5>
+                        <p class="modal-subtitle">Fill in the details to create a new user account</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/settings/users" method="POST" id="createUserForm">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="createFullName">Full Name <span class="required">*</span></label>
+                            <input type="text" id="createFullName" name="fullName" placeholder="Enter full name"
+                                required>
+                        </div>
+                        <div class="form-group">
+                            <label for="createEmail">Email <span class="required">*</span></label>
+                            <input type="email" id="createEmail" name="email" placeholder="Enter email address"
+                                required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="createPhone">Phone <span class="required">*</span></label>
+                            <input type="tel" id="createPhone" name="phone" placeholder="Enter phone number" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="createPassword">Password <span class="required">*</span></label>
+                            <div class="password-input-wrapper">
+                                <input type="password" id="createPassword" name="password"
+                                    placeholder="Min 6 characters" minlength="6" required>
+                                <button type="button" class="password-toggle"
+                                    onclick="togglePassword('createPassword', this)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="createRole">Role <span class="required">*</span></label>
+                            <select id="createRole" name="roleId" required>
+                                <option value="" disabled selected>Select Role</option>
+                                <% roles.forEach(r=> { %>
+                                    <option value="<%= r.id %>">
+                                        <%= r.name %> (Level <%= r.level %>)
+                                    </option>
+                                    <% }) %>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="createEntity">Assigned Entity</label>
+                            <select id="createEntity" name="entityId">
+                                <option value="">Global (All Entities)</option>
+                                <% entities.forEach(e=> { %>
+                                    <option value="<%= e.id %>">
+                                        <%= e.name %> (<%= e.code %>)
+                                    </option>
+                                    <% }) %>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="createManager">Reporting Manager</label>
+                        <select id="createManager" name="reportingTo">
+                            <option value="">None (Top Level)</option>
+                            <% users.forEach(m=> { %>
+                                <option value="<%= m.id %>">
+                                    <%= m.fullName %> (<%= m.email %>)
+                                </option>
+                                <% }) %>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="modal-btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="modal-btn-submit">
+                        <i class="bi bi-plus-lg me-1"></i> Create User
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content settings-modal">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <div class="modal-icon modal-icon-edit"><i class="bi bi-pencil-square"></i></div>
+                    <div>
+                        <h5 class="modal-title" id="editUserModalLabel">Edit User</h5>
+                        <p class="modal-subtitle">Update the user's details below</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editUserForm" method="POST" hx-boost="false">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editFullName">Full Name</label>
+                            <input type="text" id="editFullName" name="fullName" placeholder="Enter full name">
+                        </div>
+                        <div class="form-group">
+                            <label for="editPhone">Phone</label>
+                            <input type="tel" id="editPhone" name="phone" placeholder="Enter phone number">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editRole">Role <span class="required">*</span></label>
+                            <select id="editRole" name="roleId" required>
+                                <option value="" disabled selected>Select Role</option>
+                                <% roles.forEach(r=> { %>
+                                    <option value="<%= r.id %>">
+                                        <%= r.name %> (Level <%= r.level %>)
+                                    </option>
+                                    <% }) %>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editEntity">Assigned Entity</label>
+                            <select id="editEntity" name="entityId">
+                                <option value="">Global (All Entities)</option>
+                                <% entities.forEach(e=> { %>
+                                    <option value="<%= e.id %>">
+                                        <%= e.name %> (<%= e.code %>)
+                                    </option>
+                                    <% }) %>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editManager">Reporting Manager</label>
+                            <select id="editManager" name="reportingTo">
+                                <option value="">None (Top Level)</option>
+                                <% users.forEach(m=> { %>
+                                    <option value="<%= m.id %>">
+                                        <%= m.fullName %> (<%= m.email %>)
+                                    </option>
+                                    <% }) %>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editIsActive">Status</label>
+                            <select id="editIsActive" name="isActive">
+                                <option value="true">Active</option>
+                                <option value="false">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="editEmail" disabled class="disabled-input">
+                        <small class="form-hint">Email cannot be changed</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="modal-btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="modal-btn-submit modal-btn-edit">
+                        <i class="bi bi-check-lg me-1"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content settings-modal">
+            <div class="modal-header modal-header-danger">
+                <div class="modal-title-group">
+                    <div class="modal-icon modal-icon-danger"><i class="bi bi-trash"></i></div>
+                    <div>
+                        <h5 class="modal-title" id="deleteModalLabel">Delete User</h5>
+                        <p class="modal-subtitle">This action cannot be undone</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="deactivate-message">
+                    Are you sure you want to permanently delete <strong id="deleteUserName"></strong>?
+                    All their associated data will be removed from the system.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="modal-btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" hx-boost="false" style="display: inline;">
+                    <button type="submit" class="modal-btn-submit modal-btn-danger">
+                        <i class="bi bi-trash me-1"></i> Delete Permanent
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-dismiss toasts after 4 seconds
+    document.querySelectorAll('.toast.show').forEach(toast => {
+        setTimeout(() => {
+            toast.classList.remove('show');
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    });
+
+    // Toggle password visibility
+    function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const icon = btn.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('bi-eye', 'bi-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.replace('bi-eye-slash', 'bi-eye');
+        }
+    }
+
+    // Open edit modal
+    function openEditModal(userId, fullName, email, phone, roleId, entityId, reportingTo, isActive) {
+        document.getElementById('editUserForm').setAttribute('action', '/settings/users/' + userId + '/edit');
+        document.getElementById('editFullName').value = fullName;
+        document.getElementById('editEmail').value = email;
+        document.getElementById('editPhone').value = phone;
+        document.getElementById('editRole').value = roleId || '';
+        document.getElementById('editEntity').value = entityId || '';
+        document.getElementById('editManager').value = reportingTo || '';
+        document.getElementById('editIsActive').value = isActive ? 'true' : 'false';
+        new bootstrap.Modal(document.getElementById('editUserModal')).show();
+    }
+
+    // Open delete modal
+    function openDeleteModal(userId, fullName) {
+        document.getElementById('deleteForm').setAttribute('action', '/settings/users/' + userId + '/delete');
+        document.getElementById('deleteUserName').textContent = fullName;
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    }
+
+    // Search on Enter key
+    document.getElementById('searchInput').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            document.getElementById('filterForm').submit();
+        }
+    });
+</script>

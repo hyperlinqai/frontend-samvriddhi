@@ -1,0 +1,38 @@
+<h2 class="mb-4">Relationship Manager (RM) Management</h2>
+<div class="card shadow">
+    <div class="card-body">
+        <button class="btn btn-primary mb-3">Add New RM</button>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Region</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% rms.forEach(rm=> { %>
+                        <tr>
+                            <td>
+                                <%= rm.id %>
+                            </td>
+                            <td>
+                                <%= rm.name %>
+                            </td>
+                            <td>
+                                <%= rm.region %>
+                            </td>
+                            <td><span class="badge bg-success">
+                                    <%= rm.status %>
+                                </span></td>
+                            <td><button class="btn btn-sm btn-info">Edit</button></td>
+                        </tr>
+                        <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

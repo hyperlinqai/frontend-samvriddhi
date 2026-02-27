@@ -1,0 +1,74 @@
+<!-- Notifications Page -->
+<div class="settings-page-header">
+    <div>
+        <h2 class="settings-title">Notifications</h2>
+        <p class="settings-subtitle">Stay updated with system alerts and activities</p>
+    </div>
+    <% if (notifications.length> 0) { %>
+        <button class="btn-add-user" onclick="markAllRead()" id="markAllBtn" style="background: var(--info);">
+            <i class="bi bi-check-all"></i>
+            <span>Mark All Read</span>
+        </button>
+        <% } %>
+</div>
+
+<div class="settings-card">
+    <div class="settings-card-header">
+        <span class="settings-card-title">
+            <i class="bi bi-bell me-2"></i>Recent Notifications
+        </span>
+        <span class="settings-card-badge">
+            <%= notifications.length %> items
+        </span>
+    </div>
+
+    <% if (notifications.length===0) { %>
+        <div class="notification-empty">
+            <div class="notification-empty-icon">
+                <i class="bi bi-bell-slash"></i>
+            </div>
+            <h4>All caught up!</h4>
+            <p>You have no notifications at the moment</p>
+        </div>
+        <% } else { %>
+            <div class="notification-list">
+                <% notifications.forEach(n=> { %>
+                    <div class="notification-item <%= n.read ? '' : 'notification-unread' %>">
+                        <div class="notification-icon-wrap notification-icon-<%= n.type || 'info' %>">
+                            <i class="bi bi-<%= n.icon || 'bell' %>"></i>
+                        </div>
+                        <div class="notification-content">
+                            <div class="notification-title">
+                                <%= n.title %>
+                            </div>
+                            <div class="notification-message">
+                                <%= n.message %>
+                            </div>
+                            <div class="notification-time">
+                                <i class="bi bi-clock me-1"></i>
+                                <%= n.timeAgo || n.createdAt || 'Just now' %>
+                            </div>
+                        </div>
+                        <% if (!n.read) { %>
+                            <span class="notification-unread-dot"></span>
+                            <% } %>
+                    </div>
+                    <% }) %>
+            </div>
+            <% } %>
+</div>
+
+<script>
+    function markAllRead() {
+        document.querySelectorAll('.notification-unread').forEach(el => {
+            el.classList.remove('notification-unread');
+        });
+        document.querySelectorAll('.notification-unread-dot').forEach(el => {
+            el.style.display = 'none';
+        });
+        const btn = document.getElementById('markAllBtn');
+        btn.innerHTML = '<i class="bi bi-check-all"></i><span>All Read</span>';
+        btn.style.opacity = '0.6';
+        btn.disabled = true;
+    }
+</script>

@@ -1,0 +1,38 @@
+<h2 class="mb-4">Customer Service Point (CSP) Management</h2>
+<div class="card shadow">
+    <div class="card-body">
+        <button class="btn btn-primary mb-3">Add New CSP</button>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>CSP Name</th>
+                        <th>Assigned RM</th>
+                        <th>Location</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% csps.forEach(csp=> { %>
+                        <tr>
+                            <td>
+                                <%= csp.id %>
+                            </td>
+                            <td>
+                                <%= csp.name %>
+                            </td>
+                            <td>
+                                <%= csp.rm %>
+                            </td>
+                            <td>
+                                <%= csp.location %>
+                            </td>
+                            <td><button class="btn btn-sm btn-info">Edit</button></td>
+                        </tr>
+                        <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

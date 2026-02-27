@@ -1,0 +1,350 @@
+<!-- Toast Notification -->
+<div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1080;">
+    <% if (typeof success !=='undefined' && success) { %>
+        <div class="toast align-items-center text-bg-success border-0 show" role="alert">
+            <div class="d-flex">
+                <div class="toast-body"><i class="bi bi-check-circle me-2"></i>
+                    <%= success %>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+        <% } %>
+            <% if (typeof error !=='undefined' && error) { %>
+                <div class="toast align-items-center text-bg-danger border-0 show" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body"><i class="bi bi-exclamation-triangle me-2"></i>
+                            <%= error %>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                            data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+                <% } %>
+</div>
+
+<!-- Settings Sub-Navigation -->
+<div class="settings-subnav">
+    <a href="/settings" class="settings-subnav-item">
+        <i class="bi bi-people"></i> Users
+    </a>
+    <a href="/settings/entities" class="settings-subnav-item">
+        <i class="bi bi-building"></i> Entities
+    </a>
+    <a href="/settings/roles" class="settings-subnav-item active">
+        <i class="bi bi-shield-lock"></i> Roles & Permissions
+    </a>
+</div>
+
+<!-- Page Header -->
+<div class="settings-page-header">
+    <div>
+        <h2 class="settings-title">Role & Permission Management</h2>
+        <p class="settings-subtitle">Define clear hierarchies and capabilities</p>
+    </div>
+    <button class="btn-add-user" data-bs-toggle="modal" data-bs-target="#createRoleModal">
+        <i class="bi bi-plus-lg"></i>
+        <span>Add Role</span>
+    </button>
+</div>
+
+<!-- Roles Table -->
+<div class="settings-card mt-4">
+    <div class="settings-card-header">
+        <span class="settings-card-title">
+            <i class="bi bi-shield-check me-2"></i>Configured Roles
+        </span>
+        <span class="settings-card-badge">
+            <%= roles.length %> total
+        </span>
+    </div>
+
+    <% if (roles.length===0) { %>
+        <div class="text-center py-5">
+            <div class="empty-state">
+                <i class="bi bi-shield-lock" style="font-size: 2.5rem; color: var(--text-muted);"></i>
+                <h4 class="mt-3 mb-1" style="color: var(--text-muted);">No roles configured</h4>
+                <small style="color: var(--text-muted);">Create your first role to start delegating access.</small>
+            </div>
+        </div>
+        <% } else { %>
+            <div class="table-responsive">
+                <table class="settings-table" id="rolesTable">
+                    <thead>
+                        <tr>
+                            <th>Role Name</th>
+                            <th>Hierarchy Level</th>
+                            <th>Scope (Entity)</th>
+                            <th>Users Assigned</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% roles.forEach(role=> { %>
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">
+                                        <%= role.name %>
+                                    </div>
+                                    <small class="text-muted">
+                                        <%= (role._count && role._count.rolePermissions) || 0 %> Permissions Active
+                                    </small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">Level <%= role.level %></span>
+                                </td>
+                                <td>
+                                    <% if (role.entity) { %>
+                                        <span class="role-badge"
+                                            style="background: var(--info-soft); color: var(--info);">
+                                            <%= role.entity.name %>
+                                        </span>
+                                        <% } else { %>
+                                            <span class="role-badge"
+                                                style="background: var(--success-soft); color: var(--success);">
+                                                Global (All Entities)
+                                            </span>
+                                            <% } %>
+                                </td>
+                                <td>
+                                    <%= (role._count && role._count.users) || 0 %> Users
+                                </td>
+                                <td class="text-end">
+                                    <div class="action-btns">
+                                        <button class="action-btn action-edit" title="Edit Role & Permissions"
+                                            onclick="openEditRoleModal('<%= role.id %>', '<%= role.name %>', '<%= role.level %>', '<%= role.entityId || '' %>', <%= JSON.stringify((role.rolePermissions || []).map(rp => rp.permissionId)) %>)">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="action-btn action-delete" title="Delete Role"
+                                            onclick="openDeleteRoleModal('<%= role.id %>', '<%= role.name %>')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <% }) %>
+                    </tbody>
+                </table>
+            </div>
+            <% } %>
+</div>
+
+<!-- Create Role Modal -->
+<div class="modal fade" id="createRoleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content settings-modal">
+            <div class="modal-header settings-modal-header">
+                <div>
+                    <h5 class="modal-title settings-modal-title">Create New Role</h5>
+                    <p class="settings-modal-subtitle">Define a new role and its operational permissions</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <!-- Important: hx-boost="false" is required to prevent double-firing since HTMX intercepts form submissions otherwise -->
+            <form action="/settings/roles" method="POST" hx-boost="false">
+                <div class="modal-body settings-modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6 form-group">
+                            <label for="roleName">Role Name <span class="required">*</span></label>
+                            <input type="text" id="roleName" name="name" placeholder="e.g. Regional Manager" required>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label for="roleLevel">Hierarchy Level <span class="required">*</span></label>
+                            <input type="number" id="roleLevel" name="level" placeholder="0 (Highest) to 100 (Lowest)"
+                                required min="0">
+                            <small class="text-muted d-block mt-1">Lower number = Higher authority</small>
+                        </div>
+                        <div class="col-md-12 form-group">
+                            <label for="roleEntity">Scope (Entity Assignment)</label>
+                            <select id="roleEntity" name="entityId">
+                                <option value="">Global (Valid across all entities)</option>
+                                <% entities.forEach(ent=> { %>
+                                    <option value="<%= ent.id %>">
+                                        <%= ent.name %> (<%= ent.code %>)
+                                    </option>
+                                    <% }) %>
+                            </select>
+                        </div>
+                    </div>
+
+                    <hr class="my-4 border-light">
+
+                    <h6 class="fw-bold mb-3"><i class="bi bi-list-check me-2"></i>Assign Permissions</h6>
+                    <div class="row g-3 max-height-300 overflow-auto form-group">
+                        <% if (permissions.length===0) { %>
+                            <p class="text-muted small">No permissions exist in the system yet.</p>
+                            <% } else { %>
+                                <% permissions.forEach(perm=> { %>
+                                    <div class="col-md-6">
+                                        <div class="form-check custom-checkbox">
+                                            <input class="form-check-input" type="checkbox" name="permissions"
+                                                value="<%= perm.id %>" id="perm_create_<%= perm.id %>">
+                                            <label class="form-check-label w-100" for="perm_create_<%= perm.id %>">
+                                                <%= perm.name %>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <% }) %>
+                                        <% } %>
+                    </div>
+                </div>
+                <div class="modal-footer settings-modal-footer">
+                    <button type="button" class="modal-btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="modal-btn-submit">
+                        <i class="bi bi-plus-lg me-1"></i> Create Role
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Role Modal -->
+<div class="modal fade" id="editRoleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content settings-modal">
+            <div class="modal-header settings-modal-header">
+                <div>
+                    <h5 class="modal-title settings-modal-title">Edit Role & Permissions</h5>
+                    <p class="settings-modal-subtitle">Modify role details and redefine permission matrix</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editRoleForm" method="POST" hx-boost="false">
+                <div class="modal-body settings-modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6 form-group">
+                            <label for="editRoleName">Role Name <span class="required">*</span></label>
+                            <input type="text" id="editRoleName" name="name" required>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label for="editRoleLevel">Hierarchy Level <span class="required">*</span></label>
+                            <input type="number" id="editRoleLevel" name="level" required min="0">
+                        </div>
+                        <div class="col-md-12 form-group">
+                            <label for="editRoleEntity">Scope (Entity Assignment)</label>
+                            <select id="editRoleEntity" name="entityId">
+                                <option value="">Global (Valid across all entities)</option>
+                                <% entities.forEach(ent=> { %>
+                                    <option value="<%= ent.id %>">
+                                        <%= ent.name %> (<%= ent.code %>)
+                                    </option>
+                                    <% }) %>
+                            </select>
+                        </div>
+                    </div>
+
+                    <hr class="my-4 border-light">
+
+                    <h6 class="fw-bold mb-3"><i class="bi bi-list-check me-2"></i>Assign Permissions</h6>
+                    <div class="row g-3 max-height-300 overflow-auto form-group">
+                        <% permissions.forEach(perm=> { %>
+                            <div class="col-md-6">
+                                <div class="form-check custom-checkbox">
+                                    <input class="form-check-input permission-checkbox" type="checkbox"
+                                        name="permissions" value="<%= perm.id %>" id="perm_edit_<%= perm.id %>">
+                                    <label class="form-check-label w-100" for="perm_edit_<%= perm.id %>">
+                                        <%= perm.name %>
+                                    </label>
+                                </div>
+                            </div>
+                            <% }) %>
+                    </div>
+                </div>
+                <div class="modal-footer settings-modal-footer">
+                    <button type="button" class="modal-btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="modal-btn-submit">
+                        <i class="bi bi-check-lg me-1"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Role Modal -->
+<div class="modal fade" id="deleteRoleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content settings-modal">
+            <div class="modal-header settings-modal-header" style="border-bottom-color: var(--danger-soft);">
+                <div class="modal-title-group">
+                    <div class="modal-icon" style="background: var(--danger-soft); color: var(--danger);">
+                        <i class="bi bi-trash"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title settings-modal-title" style="color: var(--danger);">Delete Role</h5>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="deleteRoleForm" method="POST" hx-boost="false">
+                <div class="modal-body settings-modal-body">
+                    <div class="text-center py-2">
+                        <p>Are you sure you want to delete <strong id="deleteRoleName"></strong>?</p>
+                        <small class="text-danger d-block mt-2">
+                            <i class="bi bi-x-circle me-1"></i> Any users assigned strictly to this role might lose
+                            access privileges.
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer settings-modal-footer">
+                    <button type="button" class="modal-btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="modal-btn-submit" style="background: var(--danger);">
+                        <i class="bi bi-trash me-1"></i> Delete Role
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openEditRoleModal(id, name, level, entityId, activePermissions) {
+        document.getElementById('editRoleForm').setAttribute('action', '/settings/roles/' + id + '/edit');
+        document.getElementById('editRoleName').value = name;
+        document.getElementById('editRoleLevel').value = level;
+        document.getElementById('editRoleEntity').value = entityId || '';
+
+        // Reset all checkboxes first
+        document.querySelectorAll('.permission-checkbox').forEach(cb => cb.checked = false);
+
+        // Check the ones that are assigned
+        if (activePermissions && activePermissions.length) {
+            activePermissions.forEach(permId => {
+                const cb = document.getElementById('perm_edit_' + permId);
+                if (cb) cb.checked = true;
+            });
+        }
+
+        new bootstrap.Modal(document.getElementById('editRoleModal')).show();
+    }
+
+    function openDeleteRoleModal(id, name) {
+        document.getElementById('deleteRoleForm').setAttribute('action', '/settings/roles/' + id + '/delete');
+        document.getElementById('deleteRoleName').textContent = name;
+        new bootstrap.Modal(document.getElementById('deleteRoleModal')).show();
+    }
+
+    // Auto-dismiss toasts
+    document.querySelectorAll('.toast.show').forEach(toast => {
+        setTimeout(() => {
+            toast.classList.remove('show');
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    });
+
+    // Clean up URL parameters on page load to prevent reshowing alerts on refresh
+    window.onload = function () {
+        if (window.history.replaceState) {
+            const url = new URL(window.location);
+            if (url.searchParams.has('success') || url.searchParams.has('error')) {
+                setTimeout(() => {
+                    url.searchParams.delete('success');
+                    url.searchParams.delete('error');
+                    window.history.replaceState({ path: url.href }, '', url.href);
+                }, 1000);
+            }
+        }
+    }
+</script>

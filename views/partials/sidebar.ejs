@@ -1,0 +1,65 @@
+<nav id="sidebar">
+    <!-- Brand -->
+    <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">S</div>
+        <span class="sidebar-brand-text">Samvriddhi</span>
+    </div>
+
+    <!-- Navigation -->
+    <div class="sidebar-nav">
+        <!-- General Section -->
+        <div class="sidebar-section-label">General</div>
+
+        <a href="/dashboard" class="sidebar-nav-item" data-page="dashboard">
+            <i class="bi bi-grid-1x2"></i>
+            <span class="nav-label">Dashboard</span>
+        </a>
+
+        <a href="/attendance" class="sidebar-nav-item" data-page="attendance">
+            <i class="bi bi-calendar-check"></i>
+            <span class="nav-label">Attendance</span>
+        </a>
+
+        <a href="/expenses" class="sidebar-nav-item" data-page="expenses">
+            <i class="bi bi-receipt"></i>
+            <span class="nav-label">Expenses</span>
+        </a>
+
+        <% if (typeof user !=='undefined' && (user.role==='admin' || user.role==='manager' )) { %>
+            <!-- Management Section -->
+            <div class="sidebar-section-label">Management</div>
+
+            <a href="/rm" class="sidebar-nav-item" data-page="rm">
+                <i class="bi bi-people"></i>
+                <span class="nav-label">RM Management</span>
+            </a>
+
+            <a href="/csp" class="sidebar-nav-item" data-page="csp">
+                <i class="bi bi-shop"></i>
+                <span class="nav-label">CSP Management</span>
+            </a>
+            <% } %>
+
+                <% if (typeof user !=='undefined' && user.role==='admin' ) { %>
+                    <a href="/reports" class="sidebar-nav-item" data-page="reports">
+                        <i class="bi bi-bar-chart-line"></i>
+                        <span class="nav-label">Reports</span>
+                    </a>
+                    <% } %>
+    </div>
+
+    <!-- Bottom Section -->
+    <div class="sidebar-bottom">
+        <% if (typeof user !=='undefined' && (user.role==='admin' || user.role==='SUPER_ADMIN' || user.role==='SM_ADMIN'
+            )) { %>
+            <a href="/settings" class="sidebar-nav-item" data-page="settings">
+                <i class="bi bi-gear"></i>
+                <span class="nav-label">Settings</span>
+            </a>
+            <% } %>
+                <a href="/logout" class="sidebar-nav-item" hx-boost="false">
+                    <i class="bi bi-box-arrow-left"></i>
+                    <span class="nav-label">Logout</span>
+                </a>
+    </div>
+</nav>

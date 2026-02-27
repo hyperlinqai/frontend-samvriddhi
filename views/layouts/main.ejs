@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samvriddhi — <%= typeof title !=='undefined' ? title : 'Dashboard' %>
+    </title>
+    <meta name="description" content="Samvriddhi Attendance Management System">
+    <link rel="icon" type="image/webp" href="/images/favicon-samviiddhi.webp">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap CSS + Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+    <!-- Custom Style System -->
+    <link rel="stylesheet" href="/css/style.css">
+
+    <!-- NProgress CSS (Loading Bar) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.css" />
+    <style>
+        /* Customize NProgress to match our theme */
+        #nprogress .bar {
+            background: var(--primary) !important;
+            height: 4px !important;
+        }
+
+        #nprogress .peg {
+            box-shadow: 0 0 10px var(--primary), 0 0 5px var(--primary) !important;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Mobile Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div id="app-wrapper">
+        <!-- Sidebar Navigation -->
+        <%- include('../partials/sidebar') %>
+
+            <!-- Main Content Area -->
+            <div id="main-area" style="margin-left: 260px; transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);">
+                <!-- Top Header -->
+                <%- include('../partials/header') %>
+
+                    <!-- Page Content -->
+                    <div id="content-wrapper">
+                        <%- body %>
+                    </div>
+            </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/main.js"></script>
+
+    <!-- HTMX Removed for Form Stability -->
+</body>
+
+</html>

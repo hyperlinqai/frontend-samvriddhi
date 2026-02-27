@@ -1,0 +1,146 @@
+<!-- Toast Notification -->
+<div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1080;">
+    <% if (typeof success !=='undefined' && success) { %>
+        <div class="toast align-items-center text-bg-success border-0 show" role="alert">
+            <div class="d-flex">
+                <div class="toast-body"><i class="bi bi-check-circle me-2"></i>
+                    <%= success %>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+        <% } %>
+</div>
+
+<!-- Profile Header -->
+<div class="profile-header">
+    <div class="profile-header-bg"></div>
+    <div class="profile-header-content">
+        <div class="profile-avatar-lg">
+            <%= profileData.fullName ? profileData.fullName.charAt(0).toUpperCase() : 'U' %>
+        </div>
+        <div class="profile-header-info">
+            <h2 class="profile-name">
+                <%= profileData.fullName || 'User' %>
+            </h2>
+            <span class="role-badge role-<%= (profileData.role || 'RM').toLowerCase().replace('_', '-') %>">
+                <%= profileData.role || 'RM' %>
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Profile Details -->
+<div class="profile-grid">
+    <!-- Personal Info Card -->
+    <div class="profile-card">
+        <div class="profile-card-header">
+            <div class="profile-card-icon">
+                <i class="bi bi-person"></i>
+            </div>
+            <h3 class="profile-card-title">Personal Information</h3>
+        </div>
+        <div class="profile-detail-list">
+            <div class="profile-detail-row">
+                <span class="profile-detail-label">Full Name</span>
+                <span class="profile-detail-value">
+                    <%= profileData.fullName || 'N/A' %>
+                </span>
+            </div>
+            <div class="profile-detail-row">
+                <span class="profile-detail-label">Email</span>
+                <span class="profile-detail-value">
+                    <%= profileData.email || 'N/A' %>
+                </span>
+            </div>
+            <div class="profile-detail-row">
+                <span class="profile-detail-label">Phone</span>
+                <span class="profile-detail-value">
+                    <%= profileData.phone || 'N/A' %>
+                </span>
+            </div>
+            <div class="profile-detail-row">
+                <span class="profile-detail-label">Role</span>
+                <span class="profile-detail-value">
+                    <span class="role-badge role-<%= (profileData.role || 'RM').toLowerCase().replace('_', '-') %>">
+                        <%= profileData.role || 'RM' %>
+                    </span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Info Card -->
+    <div class="profile-card">
+        <div class="profile-card-header">
+            <div class="profile-card-icon profile-card-icon-info">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <h3 class="profile-card-title">Account Details</h3>
+        </div>
+        <div class="profile-detail-list">
+            <div class="profile-detail-row">
+                <span class="profile-detail-label">User ID</span>
+                <span class="profile-detail-value" style="font-family: monospace; font-size: 0.8rem;">
+                    <%= profileData.id || 'N/A' %>
+                </span>
+            </div>
+            <div class="profile-detail-row">
+                <span class="profile-detail-label">Status</span>
+                <span class="profile-detail-value">
+                    <span class="status-badge status-<%= profileData.isActive !== false ? 'active' : 'inactive' %>">
+                        <span class="status-dot"></span>
+                        <%= profileData.isActive !==false ? 'Active' : 'Inactive' %>
+                    </span>
+                </span>
+            </div>
+            <% if (profileData.createdAt) { %>
+                <div class="profile-detail-row">
+                    <span class="profile-detail-label">Member Since</span>
+                    <span class="profile-detail-value">
+                        <%= new Date(profileData.createdAt).toLocaleDateString('en-IN', { year: 'numeric' ,
+                            month: 'long' , day: 'numeric' }) %>
+                    </span>
+                </div>
+                <% } %>
+                    <% if (profileData.manager) { %>
+                        <div class="profile-detail-row">
+                            <span class="profile-detail-label">Manager</span>
+                            <span class="profile-detail-value">
+                                <%= profileData.manager.fullName || 'N/A' %>
+                            </span>
+                        </div>
+                        <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="profile-actions">
+    <a href="/change-password" class="profile-action-btn">
+        <i class="bi bi-key"></i>
+        <span>Change Password</span>
+        <i class="bi bi-chevron-right ms-auto"></i>
+    </a>
+    <a href="/notifications" class="profile-action-btn">
+        <i class="bi bi-bell"></i>
+        <span>Notifications</span>
+        <i class="bi bi-chevron-right ms-auto"></i>
+    </a>
+    <a href="/logout" class="profile-action-btn profile-action-danger">
+        <i class="bi bi-box-arrow-left"></i>
+        <span>Logout</span>
+        <i class="bi bi-chevron-right ms-auto"></i>
+    </a>
+</div>
+
+<script>
+    // Auto-dismiss toasts
+    document.querySelectorAll('.toast.show').forEach(toast => {
+        setTimeout(() => {
+            toast.classList.remove('show');
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    });
+</script>

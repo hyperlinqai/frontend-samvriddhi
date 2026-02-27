@@ -1,0 +1,58 @@
+<h2 class="mb-4">Expense Approval</h2>
+<div class="card shadow">
+    <div class="card-body">
+        <ul class="nav nav-tabs mb-4">
+            <li class="nav-item">
+                <a class="nav-link active" href="#">Pending</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">Approved/Rejected</a>
+            </li>
+        </ul>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Employee</th>
+                        <th>Amount</th>
+                        <th>Purpose</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% expenses.forEach(exp=> { %>
+                        <tr>
+                            <td>
+                                <%= exp.id %>
+                            </td>
+                            <td>
+                                <%= exp.employee %>
+                            </td>
+                            <td>$<%= exp.amount %>
+                            </td>
+                            <td>
+                                <%= exp.purpose %>
+                            </td>
+                            <td>
+                                <span
+                                    class="badge <%= exp.status === 'Approved' ? 'bg-success' : 'bg-warning text-dark' %>">
+                                    <%= exp.status %>
+                                </span>
+                            </td>
+                            <td>
+                                <% if (exp.status==='Pending' ) { %>
+                                    <button class="btn btn-sm btn-success">Approve</button>
+                                    <button class="btn btn-sm btn-danger">Reject</button>
+                                    <% } else { %>
+                                        <span class="text-muted">Reviewed</span>
+                                        <% } %>
+                            </td>
+                        </tr>
+                        <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
