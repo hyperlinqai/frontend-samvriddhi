@@ -109,27 +109,18 @@ exports.updateUser = async (req, res) => {
     }
 };
 
-// POST /settings/users/:userId/delete — Hard delete user with fallback to soft delete
+// POST /settings/users/:userId/delete — Hard delete user
 exports.deleteUser = async (req, res) => {
     try {
         const api = getApiClient(req);
         const { userId } = req.params;
 
-        try {
-            // First attempt to hard delete the user
-            await api.delete(`/v1/users/${userId}/hard`);
-            return res.redirect('/settings?success=User deleted successfully');
-        } catch (hardDeleteError) {
-            // If hard delete fails (likely due to foreign key constraints from associated records),
-            // fallback to soft delete (deactivate)
-            console.log(`Hard delete failed for user ${userId}, falling back to soft delete. Error: ${hardDeleteError.message}`);
-            
-            await api.delete(`/v1/users/${userId}`);
-            return res.redirect('/settings?success=User deactivated because they have associated records');
-        }
+        await api.delete(`/v1/users/${userId}/hard`);
+
+        res.redirect('/settings?success=User deleted permanently');
     } catch (error) {
         console.error('Error deleting user:', error.message);
-        const errorMsg = error.response?.data?.message || 'Failed to delete or deactivate user.';
+        const errorMsg = error.response?.data?.message || 'Cannot delete user because they have associated records (e.g., attendance, leads). Please remove them first.';
         res.redirect(`/settings?error=${encodeURIComponent(errorMsg)}`);
     }
 };
@@ -332,6 +323,34 @@ exports.createRole = async (req, res) => {
         console.error('Error creating role:', error.message);
         const errorMsg = error.response?.data?.message || 'Failed to create role.';
         res.redirect(`/settings/roles?error=${encodeURIComponent(errorMsg)}`);
+    }
+};
+
+// GET /settings/roles/:id/edit — Render edit role page
+exports.getEditRolePage = async (req, res) => {
+    try {
+        const api = getApiClient(req);
+        const { id } = req.params;
+
+        // Fetch required data in parallel
+        const [roleResponse, permsResponse, entitiesResponse] = await Promise.all([
+            api.get(`/v1/roles/${id}`),
+            api.get('/v1/roles/permissions'),
+            api.get('/v1/entities')
+        ]);
+
+        res.render('pages/settings-role-edit', {
+            title: 'Edit Role & Permissions',
+            user: req.user,
+            role: roleResponse.data.data,
+            permissions: permsResponse.data.data,
+            entities: entitiesResponse.data.data,
+            error: null,
+            success: null
+        });
+    } catch (error) {
+        console.error('Error fetching role for edit:', error.message);
+        res.redirect(`/settings/roles?error=${encodeURIComponent('Failed to load role details.')}`);
     }
 };
 

@@ -22,6 +22,7 @@ router.post('/entities/:id/delete', settingsController.deleteEntity);
 // Role & Permission management
 router.get('/roles', settingsController.getRoles);
 router.post('/roles', settingsController.createRole);
+router.get('/roles/:id/edit', settingsController.getEditRolePage);
 router.post('/roles/:id/edit', settingsController.updateRole);
 router.post('/roles/:id/delete', settingsController.deleteRole);
 

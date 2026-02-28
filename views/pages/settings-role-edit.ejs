@@ -1,0 +1,168 @@
+<%- contentFor('body') %>
+
+    <div class="settings-page-header">
+        <div class="d-flex align-items-center gap-3">
+            <a href="/settings/roles"
+                class="settings-subnav-item d-flex align-items-center justify-content-center border shadow-sm"
+                style="border-radius: 8px; width: 40px; height: 40px; padding: 0; background: var(--card-bg);">
+                <i class="bi bi-arrow-left text-dark"></i>
+            </a>
+            <div>
+                <h2 class="settings-title">Edit Role: <span style="color: var(--text-primary);">
+                        <%= role.name %>
+                    </span></h2>
+                <p class="settings-subtitle">Manage role details and its permission assignments</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <form action="/settings/roles/<%= role.id %>/edit" method="POST">
+                <!-- Details Card -->
+                <div class="settings-card mb-4 border shadow-sm">
+                    <div class="settings-card-header border-bottom pb-3 mb-4">
+                        <span class="settings-card-title text-dark">
+                            <i class="bi bi-info-circle me-2"></i>Role Details
+                        </span>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-md-4 form-group">
+                            <label for="roleName" class="form-label text-muted small fw-semibold">Role Name <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" id="roleName" name="name" class="form-control" value="<%= role.name %>"
+                                required style="border-color: var(--border-color);">
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label for="roleLevel" class="form-label text-muted small fw-semibold">Hierarchy Level <span
+                                    class="text-danger">*</span></label>
+                            <input type="number" id="roleLevel" name="level" class="form-control"
+                                value="<%= role.level %>" required min="0" style="border-color: var(--border-color);">
+                            <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">Lower number = Higher
+                                authority (0 = Root)</small>
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label for="roleEntity" class="form-label text-muted small fw-semibold">Scope (Entity
+                                Assignment)</label>
+                            <select id="roleEntity" name="entityId" class="form-select"
+                                style="border-color: var(--border-color);">
+                                <option value="">Global (Valid across all entities)</option>
+                                <% entities.forEach(ent=> { %>
+                                    <option value="<%= ent.id %>" <%=role.entityId===ent.id ? 'selected' : '' %>>
+                                        <%= ent.name %> (<%= ent.code %>)
+                                    </option>
+                                    <% }) %>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Permissions Block -->
+                <div class="settings-card border shadow-sm">
+                    <div
+                        class="settings-card-header border-bottom pb-3 mb-4 d-flex justify-content-between align-items-center">
+                        <span class="settings-card-title text-dark">
+                            <i class="bi bi-shield-lock me-2"></i>Access Permissions
+                        </span>
+                        <span class="badge rounded-pill px-3 py-2 fw-normal shadow-sm"
+                            style="background: var(--text-primary); color: var(--accent);">
+                            <%= (role.rolePermissions || []).length %> Permissions Active
+                        </span>
+                    </div>
+
+                    <% const activePermIds=new Set((role.rolePermissions || []).map(rp=> rp.permissionId));
+                        const groupedPerms = {};
+                        permissions.forEach(perm => {
+                        const moduleMatch = perm.name.split('.')[0];
+                        const module = moduleMatch.charAt(0).toUpperCase() + moduleMatch.slice(1);
+                        if(!groupedPerms[module]) groupedPerms[module] = [];
+                        groupedPerms[module].push(perm);
+                        });
+                        %>
+
+                        <div class="table-responsive w-100">
+                            <table class="permissions-table">
+                                <thead class="permissions-table-header">
+                                    <tr>
+                                        <th>Action</th>
+                                        <th style="width: 120px;">Manager Access</th>
+                                        <th>Action</th>
+                                        <th style="width: 120px;">Manager Access</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% Object.keys(groupedPerms).forEach(module=> { %>
+                                        <tr class="module-header-row">
+                                            <td colspan="4">
+                                                <% let iconClass='bi-folder' ; if(module.toLowerCase()==='users' )
+                                                    iconClass='bi-people' ; if(module.toLowerCase()==='roles' )
+                                                    iconClass='bi-shield-lock' ; if(module.toLowerCase()==='entities' )
+                                                    iconClass='bi-building' ; if(module.toLowerCase()==='attendances' )
+                                                    iconClass='bi-calendar-check' ; if(module.toLowerCase()==='expenses'
+                                                    ) iconClass='bi-cash-coin' ; %>
+                                                    <i class="bi <%= iconClass %>"></i>
+                                                    <%= module %> Management
+                                            </td>
+                                        </tr>
+                                        <% for (let i=0; i < groupedPerms[module].length; i +=2) { const
+                                            permLeft=groupedPerms[module][i]; const permRight=groupedPerms[module][i +
+                                            1]; %>
+                                            <tr class="permission-row">
+                                                <!-- Left Column -->
+                                                <td>
+                                                    <label for="perm_edit_<%= permLeft.id %>"
+                                                        class="mb-0 cursor-pointer d-block w-100">
+                                                        <%= permLeft.name.split('.')[1].charAt(0).toUpperCase() +
+                                                            permLeft.name.split('.')[1].slice(1) %>
+                                                    </label>
+                                                </td>
+                                                <td class="text-end">
+                                                    <div class="form-check custom-perm-checkbox">
+                                                        <input class="form-check-input" type="checkbox"
+                                                            name="permissions" value="<%= permLeft.id %>"
+                                                            id="perm_edit_<%= permLeft.id %>"
+                                                            <%=activePermIds.has(permLeft.id) ? 'checked' : '' %>>
+                                                    </div>
+                                                </td>
+
+                                                <!-- Right Column -->
+                                                <% if (permRight) { %>
+                                                    <td class="border-start">
+                                                        <label for="perm_edit_<%= permRight.id %>"
+                                                            class="mb-0 cursor-pointer d-block w-100">
+                                                            <%= permRight.name.split('.')[1].charAt(0).toUpperCase() +
+                                                                permRight.name.split('.')[1].slice(1) %>
+                                                        </label>
+                                                    </td>
+                                                    <td class="text-end">
+                                                        <div class="form-check custom-perm-checkbox">
+                                                            <input class="form-check-input" type="checkbox"
+                                                                name="permissions" value="<%= permRight.id %>"
+                                                                id="perm_edit_<%= permRight.id %>"
+                                                                <%=activePermIds.has(permRight.id) ? 'checked' : '' %>>
+                                                        </div>
+                                                    </td>
+                                                    <% } else { %>
+                                                        <td class="border-start"></td>
+                                                        <td></td>
+                                                        <% } %>
+                                            </tr>
+                                            <% } %>
+                                                <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Action Footer -->
+                        <div class="d-flex justify-content-end mt-5 pt-4 border-top gap-3">
+                            <a href="/settings/roles"
+                                class="modal-btn-cancel text-decoration-none d-flex align-items-center justify-content-center">Cancel</a>
+                            <button type="submit" class="btn-add-user d-flex align-items-center shadow-sm">
+                                <i class="bi bi-check-lg me-2"></i> Save Changes
+                            </button>
+                        </div>
+                </div>
+            </form>
+        </div>
+    </div>
