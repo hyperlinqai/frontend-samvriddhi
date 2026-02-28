@@ -109,18 +109,27 @@ exports.updateUser = async (req, res) => {
     }
 };
 
-// POST /settings/users/:userId/delete — Hard delete user
+// POST /settings/users/:userId/delete — Hard delete user with fallback to soft delete
 exports.deleteUser = async (req, res) => {
     try {
         const api = getApiClient(req);
         const { userId } = req.params;
 
-        await api.delete(`/v1/users/${userId}/hard`);
-
-        res.redirect('/settings?success=User deleted successfully');
+        try {
+            // First attempt to hard delete the user
+            await api.delete(`/v1/users/${userId}/hard`);
+            return res.redirect('/settings?success=User deleted successfully');
+        } catch (hardDeleteError) {
+            // If hard delete fails (likely due to foreign key constraints from associated records),
+            // fallback to soft delete (deactivate)
+            console.log(`Hard delete failed for user ${userId}, falling back to soft delete. Error: ${hardDeleteError.message}`);
+            
+            await api.delete(`/v1/users/${userId}`);
+            return res.redirect('/settings?success=User deactivated because they have associated records');
+        }
     } catch (error) {
         console.error('Error deleting user:', error.message);
-        const errorMsg = error.response?.data?.message || 'Failed to delete user.';
+        const errorMsg = error.response?.data?.message || 'Failed to delete or deactivate user.';
         res.redirect(`/settings?error=${encodeURIComponent(errorMsg)}`);
     }
 };
