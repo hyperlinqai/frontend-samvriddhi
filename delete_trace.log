@@ -4,3 +4,7 @@
 [2026-02-26T20:19:32.304Z] Success response from API: 204
 [2026-02-28T10:26:41.908Z] Attempting DELETE /v1/entities/260c2c04-a851-4dd4-bc41-a73aa274bc6e/hard
 [2026-02-28T10:26:42.703Z] Success response from API: 204
+[2026-02-28T11:41:11.366Z] Attempting DELETE /v1/entities/cb8d7c7e-5032-439c-86a5-4c105d0d290c/hard
+[2026-02-28T11:41:11.634Z] Success response from API: 204
+[2026-02-28T11:41:44.952Z] Attempting DELETE /v1/entities/a8e9a1fa-2b0f-4638-b9ce-11a1e7f90564/hard
+[2026-02-28T11:41:45.216Z] Success response from API: 204
