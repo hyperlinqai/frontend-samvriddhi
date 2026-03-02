@@ -50,8 +50,9 @@
 
     <!-- Bottom Section -->
     <div class="sidebar-bottom">
-        <% if (typeof user !=='undefined' && (user.role==='admin' || user.role==='SUPER_ADMIN' || user.role==='SM_ADMIN'
-            )) { %>
+        <% if (typeof user !=='undefined' && (user.role==='admin' || user.role==='SUPER_ADMIN' ||
+            user.role==='Super Admin' || user.role==='SuperAdmin' || user.role==='superadmin' ||
+            user.role==='super_admin' || user.role==='SUPER ADMIN' || user.role==='SM_ADMIN' )) { %>
             <a href="/settings" class="sidebar-nav-item" data-page="settings">
                 <i class="bi bi-gear"></i>
                 <span class="nav-label">Settings</span>

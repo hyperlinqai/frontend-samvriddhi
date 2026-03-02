@@ -52,10 +52,18 @@ exports.postLogin = async (req, res) => {
         }
 
         // Create a session token for the frontend
+        // Handle cases where role is an object (e.g., populated from DB) instead of a simple string
+        const roleString = typeof userData.role === 'object' && userData.role !== null ? userData.role.name : userData.role;
+
+        console.log('--- DEBUG ROLE EXTRACTION ---');
+        console.log('Raw userData.role:', JSON.stringify(userData.role));
+        console.log('Extracted roleString:', roleString);
+        console.log('-----------------------------');
+
         const sessionPayload = {
             id: userData.id,
             name: userData.fullName,
-            role: userData.role,
+            role: roleString,
             email: userData.email,
             phone: userData.phone
         };

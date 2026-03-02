@@ -4,7 +4,10 @@ const settingsController = require('../controllers/settingsController');
 const { requireAuth, requireRole } = require('../middleware/authMiddleware');
 
 // All settings routes require admin role
-router.use(requireAuth, requireRole(['admin', 'SUPER_ADMIN', 'SM_ADMIN']));
+router.use(requireAuth, requireRole([
+    'admin', 'SUPER_ADMIN', 'Super Admin', 'SM_ADMIN',
+    'superadmin', 'SuperAdmin', 'super_admin', 'SUPER ADMIN'
+]));
 
 // User management
 router.get('/', settingsController.getUsers);
