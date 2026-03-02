@@ -13,20 +13,20 @@ router.use(requireAuth, requireRole([
 router.get('/', settingsController.getUsers);
 router.post('/users', settingsController.createUser);
 router.post('/users/:userId/edit', settingsController.updateUser);
-router.post('/users/:userId/delete', settingsController.deleteUser);
+router.post('/users/:userId/toggle-active', settingsController.toggleUserActive);
 
 // Entity management
 router.get('/entities', settingsController.getEntities);
 router.post('/entities', settingsController.createEntity);
 router.post('/entities/:id/edit', settingsController.updateEntity);
 router.post('/entities/:id/deactivate', settingsController.deactivateEntity);
-router.post('/entities/:id/delete', settingsController.deleteEntity);
+router.post('/entities/:id/reactivate', settingsController.reactivateEntity);
 
 // Role & Permission management
 router.get('/roles', settingsController.getRoles);
 router.post('/roles', settingsController.createRole);
 router.get('/roles/:id/edit', settingsController.getEditRolePage);
 router.post('/roles/:id/edit', settingsController.updateRole);
-router.post('/roles/:id/delete', settingsController.deleteRole);
+router.post('/roles/:id/toggle-active', settingsController.toggleRoleActive);
 
 module.exports = router;

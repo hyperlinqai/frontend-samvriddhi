@@ -150,11 +150,17 @@
                                                 onclick="openDeactivateEntityModal('<%= entity.id %>', '<%= entity.name %>')">
                                                 <i class="bi bi-x-circle"></i>
                                             </button>
-                                            <% } %>
-                                                <button class="action-btn action-delete" title="Hard Delete Entity"
-                                                    onclick="openDeleteEntityModal('<%= entity.id %>', '<%= entity.name %>')">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
+                                            <% } else { %>
+                                                <form method="POST"
+                                                    action="/settings/entities/<%= entity.id %>/reactivate"
+                                                    style="display:inline;">
+                                                    <button type="submit" class="action-btn action-edit"
+                                                        title="Reactivate Entity"
+                                                        onclick="return confirm('Are you sure you want to reactivate <%= entity.name %>?')">
+                                                        <i class="bi bi-play-circle"></i>
+                                                    </button>
+                                                </form>
+                                                <% } %>
                                     </div>
                                 </td>
                             </tr>
@@ -295,40 +301,7 @@
     </div>
 </div>
 
-<!-- Hard Delete Entity Modal -->
-<div class="modal fade" id="deleteEntityModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content settings-modal">
-            <div class="modal-header settings-modal-header" style="border-bottom-color: var(--danger-soft);">
-                <div class="modal-title-group">
-                    <div class="modal-icon" style="background: var(--danger-soft); color: var(--danger);"><i
-                            class="bi bi-trash"></i></div>
-                    <div>
-                        <h5 class="modal-title settings-modal-title" style="color: var(--danger);">Delete Entity</h5>
-                        <p class="settings-modal-subtitle">Permanent hard-delete</p>
-                    </div>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="deleteEntityForm" method="POST" hx-boost="false">
-                <div class="modal-body settings-modal-body">
-                    <div class="text-center py-2">
-                        <p>Are you absolutely sure you want to permanently delete <strong
-                                id="deleteEntityName"></strong>?</p>
-                        <small class="text-muted">This action physically removes it from the database and cannot be
-                            undone.</small>
-                    </div>
-                </div>
-                <div class="modal-footer settings-modal-footer">
-                    <button type="button" class="modal-btn-cancel" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="modal-btn-submit" style="background: var(--danger);">
-                        <i class="bi bi-trash me-1"></i> Delete Forever
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+
 
 <script>
     function openEditEntityModal(id, name, code, status) {
@@ -345,11 +318,7 @@
         new bootstrap.Modal(document.getElementById('deactivateEntityModal')).show();
     }
 
-    function openDeleteEntityModal(id, name) {
-        document.getElementById('deleteEntityForm').setAttribute('action', '/settings/entities/' + id + '/delete');
-        document.getElementById('deleteEntityName').textContent = name;
-        new bootstrap.Modal(document.getElementById('deleteEntityModal')).show();
-    }
+
 
     // Auto-dismiss toasts
     document.querySelectorAll('.toast.show').forEach(toast => {

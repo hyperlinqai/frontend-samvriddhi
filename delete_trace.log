@@ -8,3 +8,11 @@
 [2026-02-28T11:41:11.634Z] Success response from API: 204
 [2026-02-28T11:41:44.952Z] Attempting DELETE /v1/entities/a8e9a1fa-2b0f-4638-b9ce-11a1e7f90564/hard
 [2026-02-28T11:41:45.216Z] Success response from API: 204
+[2026-03-02T06:35:17.529Z] Attempting DELETE /v1/entities/16f306e0-1b31-4f3e-93ac-66fbefa36c0a/hard
+[2026-03-02T06:35:18.206Z] Success response from API: 204
+[2026-03-02T06:35:24.028Z] Attempting DELETE /v1/entities/59810616-5ffe-4f97-9e69-3e078021bc2c/hard
+[2026-03-02T06:35:25.083Z] Success response from API: 204
+[2026-03-02T06:58:06.037Z] Attempting DELETE /v1/entities/481ee700-07a4-4970-a6cb-3fd4e0e1bf0f/hard
+[2026-03-02T06:58:06.691Z] Success response from API: 204
+[2026-03-02T06:58:10.108Z] Attempting DELETE /v1/entities/50a0fd8e-2ef0-4067-a7af-9ed85ba95131/hard
+[2026-03-02T06:58:10.436Z] Success response from API: 204

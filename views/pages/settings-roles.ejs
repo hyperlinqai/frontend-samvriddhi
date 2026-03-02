@@ -75,6 +75,7 @@
                             <th>Role Name</th>
                             <th>Hierarchy Level</th>
                             <th>Scope (Entity)</th>
+                            <th>Status</th>
                             <th>Users Assigned</th>
                             <th class="text-end">Actions</th>
                         </tr>
@@ -107,6 +108,13 @@
                                             <% } %>
                                 </td>
                                 <td>
+                                    <% if (role.isActive !==false) { %>
+                                        <span class="badge bg-success">Active</span>
+                                        <% } else { %>
+                                            <span class="badge bg-secondary">Inactive</span>
+                                            <% } %>
+                                </td>
+                                <td>
                                     <%= (role._count && role._count.users) || 0 %> Users
                                 </td>
                                 <td class="text-end">
@@ -115,10 +123,16 @@
                                             title="Edit Role & Permissions">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        <button class="action-btn action-delete" title="Delete Role"
-                                            onclick="openDeleteRoleModal('<%= role.id %>', '<%= role.name %>')">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
+                                        <form method="POST" action="/settings/roles/<%= role.id %>/toggle-active"
+                                            style="display:inline;">
+                                            <button type="submit"
+                                                class="action-btn <%= role.isActive !== false ? 'action-delete' : 'action-edit' %>"
+                                                title="<%= role.isActive !== false ? 'Deactivate' : 'Activate' %> Role"
+                                                onclick="return confirm('Are you sure you want to <%= role.isActive !== false ? 'deactivate' : 'activate' %> <%= role.name %>?')">
+                                                <i
+                                                    class="bi bi-<%= role.isActive !== false ? 'pause-circle' : 'play-circle' %>"></i>
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
@@ -276,50 +290,8 @@
 </div>
 
 
-<!-- Delete Role Modal -->
-<div class="modal fade" id="deleteRoleModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content settings-modal">
-            <div class="modal-header settings-modal-header" style="border-bottom-color: var(--danger-soft);">
-                <div class="modal-title-group">
-                    <div class="modal-icon" style="background: var(--danger-soft); color: var(--danger);">
-                        <i class="bi bi-trash"></i>
-                    </div>
-                    <div>
-                        <h5 class="modal-title settings-modal-title" style="color: var(--danger);">Delete Role</h5>
-                    </div>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="deleteRoleForm" method="POST" hx-boost="false">
-                <div class="modal-body settings-modal-body">
-                    <div class="text-center py-2">
-                        <p>Are you sure you want to delete <strong id="deleteRoleName"></strong>?</p>
-                        <small class="text-danger d-block mt-2">
-                            <i class="bi bi-x-circle me-1"></i> Any users assigned strictly to this role might lose
-                            access privileges.
-                        </small>
-                    </div>
-                </div>
-                <div class="modal-footer settings-modal-footer">
-                    <button type="button" class="modal-btn-cancel" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="modal-btn-submit" style="background: var(--danger);">
-                        <i class="bi bi-trash me-1"></i> Delete Role
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 <script>
-
-
-    function openDeleteRoleModal(id, name) {
-        document.getElementById('deleteRoleForm').setAttribute('action', '/settings/roles/' + id + '/delete');
-        document.getElementById('deleteRoleName').textContent = name;
-        new bootstrap.Modal(document.getElementById('deleteRoleModal')).show();
-    }
 
     // Auto-dismiss toasts
     document.querySelectorAll('.toast.show').forEach(toast => {

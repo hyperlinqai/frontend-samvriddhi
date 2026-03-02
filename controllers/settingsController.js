@@ -4,12 +4,15 @@ const { getApiClient } = require('../utils/apiClient');
 exports.getUsers = async (req, res, next) => {
     try {
         const api = getApiClient(req);
-        const { search, role, page } = req.query;
+        const { search, role, status, page } = req.query;
 
         // Build query params
         const params = new URLSearchParams();
         if (search) params.append('search', search);
         if (role) params.append('role', role);
+        if (status) {
+            params.append('isActive', status);
+        }
         params.append('page', page || '1');
         params.append('limit', '20');
 
@@ -37,7 +40,7 @@ exports.getUsers = async (req, res, next) => {
             roles,
             entities,
             meta,
-            filters: { search: search || '', role: role || '' },
+            filters: { search: search || '', role: role || '', status: status || '' },
             user: req.user,
             success: req.query.success || null,
             error: req.query.error || null
@@ -50,7 +53,7 @@ exports.getUsers = async (req, res, next) => {
             roles: [],
             entities: [],
             meta: { total: 0, page: 1, totalPages: 1 },
-            filters: { search: '', role: '' },
+            filters: { search: '', role: '', status: '' },
             user: req.user,
             success: null,
             error: error.response?.data?.message || 'Failed to load users.'
@@ -62,7 +65,13 @@ exports.getUsers = async (req, res, next) => {
 exports.createUser = async (req, res) => {
     try {
         const api = getApiClient(req);
-        const { fullName, email, phone, password, roleId, entityId, reportingTo } = req.body;
+        const { fullName, email, phone, password, roleId, entityIds, reportingTo } = req.body;
+
+        // Ensure entityIds is an array
+        let entityIdArray = [];
+        if (entityIds) {
+            entityIdArray = Array.isArray(entityIds) ? entityIds : [entityIds];
+        }
 
         await api.post('/v1/users', {
             fullName,
@@ -70,7 +79,7 @@ exports.createUser = async (req, res) => {
             phone,
             password,
             roleId,
-            entityId: entityId ? entityId : undefined,
+            entityIds: entityIdArray.length > 0 ? entityIdArray : undefined,
             reportingTo: reportingTo ? reportingTo : undefined
         });
 
@@ -87,13 +96,19 @@ exports.updateUser = async (req, res) => {
     try {
         const api = getApiClient(req);
         const { userId } = req.params;
-        const { fullName, phone, roleId, entityId, reportingTo, isActive } = req.body;
+        const { fullName, phone, roleId, entityIds, reportingTo, isActive } = req.body;
 
         const updateData = {};
         if (fullName) updateData.fullName = fullName;
         if (phone) updateData.phone = phone;
         if (roleId) updateData.roleId = roleId;
-        updateData.entityId = entityId ? entityId : null;
+
+        if (entityIds) {
+            updateData.entityIds = Array.isArray(entityIds) ? entityIds : [entityIds];
+        } else {
+            updateData.entityIds = [];
+        }
+
         updateData.reportingTo = reportingTo ? reportingTo : null;
         if (typeof isActive !== 'undefined') {
             updateData.isActive = isActive === 'true' || isActive === true;
@@ -109,18 +124,25 @@ exports.updateUser = async (req, res) => {
     }
 };
 
-// POST /settings/users/:userId/delete — Hard delete user
-exports.deleteUser = async (req, res) => {
+// POST /settings/users/:userId/toggle-active — Toggle user active status
+exports.toggleUserActive = async (req, res) => {
     try {
         const api = getApiClient(req);
         const { userId } = req.params;
 
-        await api.delete(`/v1/users/${userId}/hard`);
+        // Get current user status
+        const { data: userData } = await api.get(`/v1/users/${userId}`);
+        const currentStatus = userData.data.isActive;
 
-        res.redirect('/settings?success=User deleted permanently');
+        await api.patch(`/v1/users/${userId}`, {
+            isActive: !currentStatus
+        });
+
+        const action = currentStatus ? 'deactivated' : 'activated';
+        res.redirect(`/settings?success=User ${action} successfully`);
     } catch (error) {
-        console.error('Error deleting user:', error.message);
-        const errorMsg = error.response?.data?.message || 'Cannot delete user because they have associated records (e.g., attendance, leads). Please remove them first.';
+        console.error('Error toggling user status:', error.message);
+        const errorMsg = error.response?.data?.message || 'Failed to update user status.';
         res.redirect(`/settings?error=${encodeURIComponent(errorMsg)}`);
     }
 };
@@ -133,16 +155,21 @@ exports.getEntities = async (req, res) => {
         const api = getApiClient(req);
         const { search, status, page } = req.query;
 
+        let entities = [];
+        let meta = { total: 0, page: 1, totalPages: 1 };
+
         const params = new URLSearchParams();
         if (search) params.append('search', search);
-        if (status) params.append('status', status);
+        if (status) {
+            params.append('status', status);
+        } else {
+            // Default to 'all' to show both active and inactive
+            params.append('status', 'all');
+        }
         params.append('page', page || '1');
         params.append('limit', '20');
 
         const response = await api.get(`/v1/entities?${params.toString()}`);
-        let entities = [];
-        let meta = { total: 0, page: 1, totalPages: 1 };
-
         if (response.data.success !== false) {
             entities = response.data.data || [];
             meta = response.data.meta || meta;
@@ -230,28 +257,23 @@ exports.deactivateEntity = async (req, res) => {
     }
 };
 
-// POST /settings/entities/:id/delete — Hard-delete entity
-exports.deleteEntity = async (req, res) => {
+// POST /settings/entities/:id/reactivate — Reactivate entity
+exports.reactivateEntity = async (req, res) => {
     try {
-        require('fs').appendFileSync('frontend_trace.log', `[${new Date().toISOString()}] DELETE ROUTE HIT for ID ${req.params.id}\n`);
         const api = getApiClient(req);
         const { id } = req.params;
 
-        require('fs').appendFileSync('delete_trace.log', `[${new Date().toISOString()}] Attempting DELETE /v1/entities/${id}/hard\n`);
-        const response = await api.delete(`/v1/entities/${id}/hard`);
-        require('fs').appendFileSync('delete_trace.log', `[${new Date().toISOString()}] Success response from API: ${response.status}\n`);
+        await api.patch(`/v1/entities/${id}`, { status: true });
 
-        res.redirect('/settings/entities?success=Entity deleted permanently');
+        res.redirect('/settings/entities?success=Entity reactivated successfully');
     } catch (error) {
-        require('fs').writeFileSync('delete_error.log', JSON.stringify({
-            message: error.message,
-            response: error.response?.data || 'No response data'
-        }, null, 2));
-        console.error('Error deleting entity:', error.message);
-        const errorMsg = error.response?.data?.message || 'Failed to delete entity. You may need Super Admin privileges.';
+        console.error('Error reactivating entity:', error.message);
+        const errorMsg = error.response?.data?.message || 'Failed to reactivate entity.';
         res.redirect(`/settings/entities?error=${encodeURIComponent(errorMsg)}`);
     }
 };
+
+
 
 // ══════════════════════════════════════════════
 // ROLE & PERMISSION MANAGEMENT
@@ -382,18 +404,18 @@ exports.updateRole = async (req, res) => {
     }
 };
 
-// POST /settings/roles/:id/delete — Delete role
-exports.deleteRole = async (req, res) => {
+// POST /settings/roles/:id/toggle-active — Toggle role active status
+exports.toggleRoleActive = async (req, res) => {
     try {
         const api = getApiClient(req);
         const { id } = req.params;
 
-        await api.delete(`/v1/roles/${id}`);
+        await api.patch(`/v1/roles/${id}/toggle-active`);
 
-        res.redirect('/settings/roles?success=Role deleted successfully');
+        res.redirect('/settings/roles?success=Role status updated successfully');
     } catch (error) {
-        console.error('Error deleting role:', error.message);
-        const errorMsg = error.response?.data?.message || 'Failed to delete role.';
+        console.error('Error toggling role status:', error.message);
+        const errorMsg = error.response?.data?.message || 'Failed to update role status.';
         res.redirect(`/settings/roles?error=${encodeURIComponent(errorMsg)}`);
     }
 };

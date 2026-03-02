@@ -66,10 +66,17 @@
                     <% }) %>
             </select>
         </div>
+        <div class="filter-role">
+            <select name="status" id="statusFilter" onchange="document.getElementById('filterForm').submit()">
+                <option value="">All Status</option>
+                <option value="true" <%=filters.status==='true' ? 'selected' : '' %>>Active</option>
+                <option value="false" <%=filters.status==='false' ? 'selected' : '' %>>Inactive</option>
+            </select>
+        </div>
         <button type="submit" class="filter-btn">
             <i class="bi bi-funnel"></i> Filter
         </button>
-        <% if (filters.search || filters.role) { %>
+        <% if (filters.search || filters.role || filters.status) { %>
             <a href="/settings" class="filter-clear-btn">
                 <i class="bi bi-x-lg"></i> Clear
             </a>
@@ -132,11 +139,15 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <% if (u.entity) { %>
-                                        <span class="role-badge"
-                                            style="background: var(--info-soft); color: var(--info);">
-                                            <%= u.entity.name %>
-                                        </span>
+                                    <% if (u.entities && u.entities.length> 0) { %>
+                                        <div class="d-flex flex-wrap gap-1">
+                                            <% u.entities.forEach(entity=> { %>
+                                                <span class="role-badge"
+                                                    style="background: var(--info-soft); color: var(--info); font-size: 0.7rem;">
+                                                    <%= entity.name %>
+                                                </span>
+                                                <% }) %>
+                                        </div>
                                         <% } else { %>
                                             <span class="text-muted small">Global</span>
                                             <% } %>
@@ -170,13 +181,19 @@
                                 <td class="text-end">
                                     <div class="action-btns">
                                         <button class="action-btn action-edit" title="Edit User"
-                                            onclick="openEditModal('<%= u.id %>', '<%= (u.fullName || '').replace(/'/g, '\\\'') %>', '<%= u.email || '' %>', '<%= u.phone || '' %>', '<%= u.roleId || '' %>', '<%= u.entityId || '' %>', '<%= u.reportingTo || '' %>', <%= u.isActive !== false %>)">
+                                            onclick="openEditModal('<%= u.id %>', '<%= (u.fullName || '').replace(/'/g, '\\\'') %>', '<%= u.email || '' %>', '<%= u.phone || '' %>', '<%= u.roleId || (u.roleRecord && u.roleRecord.id) || '' %>', <%= JSON.stringify((u.entities || []).map(e => e.id)) %>, '<%= u.reportingTo || (u.reportingToUser && u.reportingToUser.id) || '' %>', <%= u.isActive !== false %>)">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <button class="action-btn action-delete" title="Delete User"
-                                            onclick="openDeleteModal('<%= u.id %>', '<%= (u.fullName || '').replace(/'/g, '\\\'') %>')">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
+                                        <form method="POST" action="/settings/users/<%= u.id %>/toggle-active"
+                                            style="display:inline;">
+                                            <button type="submit"
+                                                class="action-btn <%= u.isActive !== false ? 'action-delete' : 'action-edit' %>"
+                                                title="<%= u.isActive !== false ? 'Deactivate' : 'Activate' %> User"
+                                                onclick="return confirm('Are you sure you want to <%= u.isActive !== false ? 'deactivate' : 'activate' %> <%= (u.fullName || '').replace(/'/g, '\\\'') %>?')">
+                                                <i
+                                                    class="bi bi-<%= u.isActive !== false ? 'pause-circle' : 'play-circle' %>"></i>
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
@@ -194,13 +211,13 @@
             </span>
             <div class="pagination-btns">
                 <% if (meta.page> 1) { %>
-                    <a href="/settings?page=<%= meta.page - 1 %>&search=<%= filters.search %>&role=<%= filters.role %>"
+                    <a href="/settings?page=<%= meta.page - 1 %>&search=<%= filters.search %>&role=<%= filters.role %>&status=<%= filters.status %>"
                         class="pagination-btn">
                         <i class="bi bi-chevron-left"></i> Prev
                     </a>
                     <% } %>
                         <% if (meta.page < meta.totalPages) { %>
-                            <a href="/settings?page=<%= meta.page + 1 %>&search=<%= filters.search %>&role=<%= filters.role %>"
+                            <a href="/settings?page=<%= meta.page + 1 %>&search=<%= filters.search %>&role=<%= filters.role %>&status=<%= filters.status %>"
                                 class="pagination-btn">
                                 Next <i class="bi bi-chevron-right"></i>
                             </a>
@@ -268,15 +285,21 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="createEntity">Assigned Entity</label>
-                            <select id="createEntity" name="entityId">
-                                <option value="">Global (All Entities)</option>
+                            <label>Assigned Entities</label>
+                            <div class="entity-checkbox-list">
                                 <% entities.forEach(e=> { %>
-                                    <option value="<%= e.id %>">
-                                        <%= e.name %> (<%= e.code %>)
-                                    </option>
+                                    <label class="entity-checkbox-item">
+                                        <input type="checkbox" name="entityIds" value="<%= e.id %>">
+                                        <span class="entity-checkbox-label">
+                                            <%= e.name %> (<%= e.code %>)
+                                        </span>
+                                    </label>
                                     <% }) %>
-                            </select>
+                                        <% if (entities.length===0) { %>
+                                            <span class="text-muted small p-2">No entities available</span>
+                                            <% } %>
+                            </div>
+                            <small class="form-hint">Select one or more entities</small>
                         </div>
                     </div>
                     <div class="form-group">
@@ -341,15 +364,21 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="editEntity">Assigned Entity</label>
-                            <select id="editEntity" name="entityId">
-                                <option value="">Global (All Entities)</option>
+                            <label>Assigned Entities</label>
+                            <div class="entity-checkbox-list" id="editEntityCheckboxes">
                                 <% entities.forEach(e=> { %>
-                                    <option value="<%= e.id %>">
-                                        <%= e.name %> (<%= e.code %>)
-                                    </option>
+                                    <label class="entity-checkbox-item">
+                                        <input type="checkbox" name="entityIds" value="<%= e.id %>">
+                                        <span class="entity-checkbox-label">
+                                            <%= e.name %> (<%= e.code %>)
+                                        </span>
+                                    </label>
                                     <% }) %>
-                            </select>
+                                        <% if (entities.length===0) { %>
+                                            <span class="text-muted small p-2">No entities available</span>
+                                            <% } %>
+                            </div>
+                            <small class="form-hint">Select one or more entities</small>
                         </div>
                     </div>
                     <div class="form-row">
@@ -389,37 +418,7 @@
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content settings-modal">
-            <div class="modal-header modal-header-danger">
-                <div class="modal-title-group">
-                    <div class="modal-icon modal-icon-danger"><i class="bi bi-trash"></i></div>
-                    <div>
-                        <h5 class="modal-title" id="deleteModalLabel">Delete User</h5>
-                        <p class="modal-subtitle">This action cannot be undone</p>
-                    </div>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p class="deactivate-message">
-                    Are you sure you want to permanently delete <strong id="deleteUserName"></strong>?
-                    All their associated data will be removed from the system.
-                </p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="modal-btn-cancel" data-bs-dismiss="modal">Cancel</button>
-                <form id="deleteForm" method="POST" hx-boost="false" style="display: inline;">
-                    <button type="submit" class="modal-btn-submit modal-btn-danger">
-                        <i class="bi bi-trash me-1"></i> Delete Permanent
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+
 
 <script>
     // Auto-dismiss toasts after 4 seconds
@@ -445,24 +444,25 @@
     }
 
     // Open edit modal
-    function openEditModal(userId, fullName, email, phone, roleId, entityId, reportingTo, isActive) {
+    function openEditModal(userId, fullName, email, phone, roleId, entityIds, reportingTo, isActive) {
         document.getElementById('editUserForm').setAttribute('action', '/settings/users/' + userId + '/edit');
         document.getElementById('editFullName').value = fullName;
         document.getElementById('editEmail').value = email;
         document.getElementById('editPhone').value = phone;
         document.getElementById('editRole').value = roleId || '';
-        document.getElementById('editEntity').value = entityId || '';
+
+        // Handle checkboxes for entities
+        const checkboxes = document.querySelectorAll('#editEntityCheckboxes input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+            cb.checked = entityIds && entityIds.includes(cb.value);
+        });
+
         document.getElementById('editManager').value = reportingTo || '';
         document.getElementById('editIsActive').value = isActive ? 'true' : 'false';
         new bootstrap.Modal(document.getElementById('editUserModal')).show();
     }
 
-    // Open delete modal
-    function openDeleteModal(userId, fullName) {
-        document.getElementById('deleteForm').setAttribute('action', '/settings/users/' + userId + '/delete');
-        document.getElementById('deleteUserName').textContent = fullName;
-        new bootstrap.Modal(document.getElementById('deleteModal')).show();
-    }
+
 
     // Search on Enter key
     document.getElementById('searchInput').addEventListener('keypress', function (e) {
